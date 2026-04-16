@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantOptionsPy — Options Pricing Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div class="hero-inner">
+
+      <!-- Left: headline -->
+      <div class="hero-left">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          QuantPy Series &nbsp;&middot;&nbsp; Project 3
+        </div>
+        <h1 class="hero-title">
+          <span class="t-purple">Quant</span><br>
+          <span class="t-white">Options</span><br>
+          <span class="t-pale">Py</span>
+        </h1>
+        <p class="hero-subtitle">
+          An options pricing engine powered by Black-Scholes and Monte Carlo simulation —
+          price vanilla and exotic derivatives, compute Greeks, and visualise convergence.
+        </p>
+        <div class="hero-chips">
+          <span class="chip chip-purple">Black-Scholes Model</span>
+          <span class="chip-sep">&mdash;</span>
+          <span class="chip chip-pale">Monte Carlo GBM</span>
+        </div>
+      </div>
+
+      <!-- Right: feature cards -->
+      <div class="hero-right">
+        <div class="feat-card">
+          <div class="feat-icon feat-icon-purple">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M4 14l3-3 3 3 6-6"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="feat-title">Black-Scholes Closed-Form</p>
+            <p class="feat-desc">Exact analytical pricing under the 1973 model — no simulation required</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon feat-icon-pale">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M3 17c2-4 4-8 7-8s5 4 7 8"></path>
+              <path d="M3 10c1-2 3-4 5-4s4 2 5 4"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="feat-title">Monte Carlo GBM Paths</p>
+            <p class="feat-desc">Simulate thousands of random stock futures using Geometric Brownian Motion</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon feat-icon-purple">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <circle cx="10" cy="10" r="7"></circle>
+              <line x1="10" y1="6" x2="10" y2="10"></line>
+              <line x1="10" y1="10" x2="13" y2="13"></line>
+            </svg>
+          </div>
+          <div>
+            <p class="feat-title">Full Greeks Dashboard</p>
+            <p class="feat-desc">Delta, Gamma, Theta, Vega, Rho — every sensitivity measure explained</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon feat-icon-pale">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <rect x="2" y="2" width="16" height="16" rx="2"></rect>
+              <line x1="7" y1="2" x2="7" y2="18"></line>
+              <line x1="13" y1="2" x2="13" y2="18"></line>
+              <line x1="2" y1="7" x2="18" y2="7"></line>
+            </svg>
+          </div>
+          <div>
+            <p class="feat-title">Exotic Derivatives</p>
+            <p class="feat-desc">Asian, Barrier, and Lookback option pricing — beyond the vanilla contract</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hero-scroll-hint">
+      <span>Configure your options below</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </header>
+
+  <!-- ===== LOADING OVERLAY ===== -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-ring">
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <p id="loading-text" class="loading-text">Running pricing engine…</p>
+    <p id="loading-sub" class="loading-sub"></p>
+  </div>
+
+  <!-- ===== ERROR BANNER ===== -->
+  <div id="error-banner" class="error-banner hidden">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="flex-shrink:0">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span id="error-message"></span>
+    <button class="banner-close" onclick="document.getElementById('error-banner').classList.add('hidden')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+
+  <!-- ===== TWO-PANEL APP ===== -->
+  <div class="app-body">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="config-sidebar">
+
+      <div class="sidebar-eyebrow">Configure Options</div>
+      <p class="sidebar-desc">Set your parameters and run the pricing engine in real time.</p>
+
+      <div class="form-fields">
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-S">Stock Price <span class="field-sym">S</span></label>
+            <div class="input-wrap">
+              <span class="input-pre">$</span>
+              <input type="number" id="inp-S" value="100" min="0.01" step="1" />
+            </div>
+            <span class="field-hint">Current market price</span>
+          </div>
+          <div class="field">
+            <label for="inp-K">Strike Price <span class="field-sym">K</span></label>
+            <div class="input-wrap">
+              <span class="input-pre">$</span>
+              <input type="number" id="inp-K" value="100" min="0.01" step="1" />
+            </div>
+            <span class="field-hint">Exercise price</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-T">Expiry <span class="field-sym">T</span></label>
+            <div class="input-wrap">
+              <input type="number" id="inp-T" value="1.0" min="0.01" max="10" step="0.05" />
+              <span class="input-suf">yrs</span>
+            </div>
+            <span class="field-hint">0.5 = 6 months</span>
+          </div>
+          <div class="field">
+            <label for="inp-barrier">Barrier <span class="field-sym">B</span></label>
+            <div class="input-wrap">
+              <span class="input-pre">$</span>
+              <input type="number" id="inp-barrier" value="80" min="0.01" step="1" />
+            </div>
+            <span class="field-hint">Knock-out level</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-sigma">Volatility <span class="field-sym">&sigma;</span></label>
+            <div class="input-wrap">
+              <input type="number" id="inp-sigma" value="0.20" min="0.01" max="4.99" step="0.01" />
+              <span class="input-suf">dec</span>
+            </div>
+            <span class="field-hint">0.20 = 20% annual vol</span>
+          </div>
+          <div class="field">
+            <label for="inp-r">Risk-Free Rate <span class="field-sym">r</span></label>
+            <div class="input-wrap">
+              <input type="number" id="inp-r" value="0.05" min="0" max="1" step="0.005" />
+              <span class="input-suf">dec</span>
+            </div>
+            <span class="field-hint">0.05 = 5% annual</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>
+            Simulations &nbsp;<span class="slider-val" id="sim-display">10,000</span><span class="slider-unit"> paths</span>
+          </label>
+          <input type="range" id="inp-sims" class="slider" min="1000" max="100000" step="1000" value="10000" />
+          <div class="slider-bounds"><span>1K</span><span>100K</span></div>
+          <span class="field-hint">More = more accurate, but slower</span>
+        </div>
+
+        <div class="field">
+          <label>Option Type</label>
+          <div class="type-toggle">
+            <button class="type-btn active" id="btn-call" onclick="setType('call')">↑ Call</button>
+            <button class="type-btn"        id="btn-put"  onclick="setType('put')">↓ Put</button>
+          </div>
+          <span class="field-hint">Call = right to buy &nbsp;&middot;&nbsp; Put = right to sell</span>
+        </div>
+
+      </div><!-- /form-fields -->
+
+      <div class="sidebar-actions">
+        <button id="run-btn" class="btn-primary" onclick="runPricing()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Price Options
+        </button>
+        <button id="conv-btn" class="btn-secondary" disabled onclick="runConvergence()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 .49-4.5"></path>
+          </svg>
+          Run Convergence Analysis
+        </button>
+      </div>
+
+      <p class="sidebar-note">Prices computed server-side in real time &middot; No look-ahead bias</p>
+
+    </aside>
+
+    <!-- ── RIGHT RESULTS ── -->
+    <main class="results-panel">
+
+      <!-- Empty state -->
+      <div id="empty-state" class="empty-state">
+        <svg class="empty-chart-svg" viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="10,140 50,110 90,120 130,70 170,90 210,40 260,60 310,20 330,30"
+                    stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+          <polyline points="10,150 50,140 90,145 130,120 170,130 210,105 260,115 310,90 330,95"
+                    stroke="#C4B5FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4" opacity="0.3"/>
+          <circle cx="210" cy="40" r="4" fill="#8B5CF6" opacity="0.7"/>
+          <circle cx="310" cy="20" r="4" fill="#A78BFA" opacity="0.7"/>
+        </svg>
+        <h3>No pricing run yet</h3>
+        <p>Set your parameters in the panel, then click <strong>Price Options</strong> to see Black-Scholes analytics, Monte Carlo paths, Greeks, and exotic pricing.</p>
+        <ul class="empty-list">
+          <li><span class="el-dot el-dot-purple"></span>Black-Scholes exact closed-form price</li>
+          <li><span class="el-dot el-dot-purple"></span>Monte Carlo Geometric Brownian Motion simulation</li>
+          <li><span class="el-dot el-dot-pale"></span>Delta · Gamma · Theta · Vega · Rho Greeks</li>
+          <li><span class="el-dot el-dot-pale"></span>Asian · Barrier · Lookback exotic option pricing</li>
+        </ul>
+      </div>
+
+      <!-- Results -->
+      <div id="results-content" class="hidden">
+
+        <div class="results-header">
+          <div>
+            <h2 id="results-title" class="results-title">Pricing Results</h2>
+            <p id="results-subtitle" class="results-subtitle"></p>
+          </div>
+          <div id="param-badges" class="param-badges"></div>
+        </div>
+
+        <!-- Section: Price Comparison -->
+        <p class="section-label">Price Comparison</p>
+        <div class="price-strip">
+          <div class="price-block">
+            <div class="price-block-label">Closed-Form Price</div>
+            <div class="price-block-model">Black-Scholes (1973)</div>
+            <div class="price-block-value" id="bs-price">—</div>
+            <span class="price-block-badge">Analytical &middot; Exact</span>
+          </div>
+          <div class="price-block">
+            <div class="price-block-label">Simulation Price</div>
+            <div class="price-block-model">Monte Carlo · GBM</div>
+            <div class="price-block-value" id="mc-price">—</div>
+            <span class="price-block-badge">Stochastic &middot; Approximate</span>
+          </div>
+        </div>
+        <div class="price-note">
+          <strong>Why are these close but not identical?</strong>
+          Black-Scholes solves the pricing equation analytically — it's exact under its assumptions.
+          Monte Carlo simulates thousands of random paths and averages payoffs — a statistical estimate.
+          Both converge to the same true price; the gap shrinks as simulation count increases.
+          Run the <strong>Convergence Analysis</strong> below to see this live.
+        </div>
+
+        <!-- Section: Greeks -->
+        <p class="section-label">Option Greeks</p>
+        <div class="greeks-grid">
+          <div class="greek-card">
+            <div class="greek-sym">&Delta;</div>
+            <div class="greek-name">Delta</div>
+            <div class="greek-val" id="g-delta">—</div>
+            <div class="greek-desc">Option price change per $1 move in the stock. A call with &Delta;=0.55 gains $0.55 when the stock rises $1.</div>
+          </div>
+          <div class="greek-card">
+            <div class="greek-sym">&Gamma;</div>
+            <div class="greek-name">Gamma</div>
+            <div class="greek-val" id="g-gamma">—</div>
+            <div class="greek-desc">How fast Delta itself changes. High &Gamma; means the option accelerates — Delta moves quickly as the stock moves.</div>
+          </div>
+          <div class="greek-card">
+            <div class="greek-sym">&Theta;</div>
+            <div class="greek-name">Theta</div>
+            <div class="greek-val neg" id="g-theta">—</div>
+            <div class="greek-desc">Value lost per calendar day just from time passing. Options are wasting assets — every day costs a little.</div>
+          </div>
+          <div class="greek-card">
+            <div class="greek-sym">&nu;</div>
+            <div class="greek-name">Vega</div>
+            <div class="greek-val" id="g-vega">—</div>
+            <div class="greek-desc">Price change per 1% move in volatility. Both calls and puts gain when vol rises — uncertainty has value.</div>
+          </div>
+          <div class="greek-card">
+            <div class="greek-sym">&rho;</div>
+            <div class="greek-name">Rho</div>
+            <div class="greek-val" id="g-rho">—</div>
+            <div class="greek-desc">Price change per 1% shift in interest rates. Calls benefit from higher rates; puts are hurt by them.</div>
+          </div>
+        </div>
+
+        <!-- Charts row 1: MC Paths | Vega -->
+        <div class="chart-row-2 fade-up">
+          <div class="chart-card">
+            <div class="chart-hdr">
+              <h3>Simulated Stock Price Paths</h3>
+              <p class="chart-sub">100 sample paths — each line is one possible future for the stock</p>
+            </div>
+            <div id="chart-paths" class="chart-area"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-hdr">
+              <h3>Option Value vs Volatility</h3>
+              <p class="chart-sub">How Vega works — the slope of this curve at &sigma; is exactly your Vega</p>
+            </div>
+            <div id="chart-vega" class="chart-area"></div>
+          </div>
+        </div>
+
+        <!-- Charts row 2: Heatmap | Convergence placeholder -->
+        <div class="chart-row-2 fade-up">
+          <div class="chart-card">
+            <div class="chart-hdr">
+              <h3>Option Value Surface</h3>
+              <p class="chart-sub">Call price across all strikes and expiration dates — brighter = more valuable</p>
+            </div>
+            <div id="chart-heatmap" class="chart-area"></div>
+          </div>
+          <div class="chart-card" id="conv-chart-card">
+            <div class="chart-hdr">
+              <h3>Monte Carlo Convergence</h3>
+              <p class="chart-sub">Law of Large Numbers — MC estimate stabilising toward Black-Scholes true price</p>
+            </div>
+            <div id="conv-placeholder" class="chart-placeholder">
+              <div class="chart-placeholder-icon">&#x21BA;</div>
+              <p>Click <strong>Run Convergence Analysis</strong> to watch the Monte Carlo estimate converge — a live proof of the Law of Large Numbers.</p>
+            </div>
+            <div id="chart-conv" class="chart-area hidden"></div>
+          </div>
+        </div>
+
+        <!-- Exotic Options -->
+        <div class="exotics-cta fade-up">
+          <div>
+            <h3>Exotic Option Pricing</h3>
+            <p>Beyond vanilla — these path-dependent derivatives are priced by Monte Carlo only. Each modifies the payoff rule in a different way, producing a different price profile.</p>
+          </div>
+        </div>
+        <div class="exotics-grid fade-up">
+          <div class="exotic-card">
+            <div class="exotic-badge">Baseline</div>
+            <div class="exotic-name">Vanilla Call (BS)</div>
+            <div class="exotic-price" id="ex-vanbs">—</div>
+            <div class="exotic-desc">The classic: a right to buy at K. Black-Scholes gives the exact analytical price. All other exotics are compared against this baseline.</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-badge">Stochastic</div>
+            <div class="exotic-name">Monte Carlo Est.</div>
+            <div class="exotic-price" id="ex-vanmc">—</div>
+            <div class="exotic-desc">The same vanilla call priced by simulation. The small gap from Black-Scholes is statistical noise — it shrinks with more simulations.</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-badge">Path-Dependent</div>
+            <div class="exotic-name">Asian Option</div>
+            <div class="exotic-price" id="ex-asian">—</div>
+            <div class="exotic-desc">Payoff is based on the average stock price over the option's life. Averaging smooths volatility — Asian options are cheaper than vanilla.</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-badge">Knock-Out</div>
+            <div class="exotic-name">Barrier Option</div>
+            <div class="exotic-price" id="ex-barrier">—</div>
+            <div class="exotic-desc">If the stock ever touches the barrier, the option instantly expires worthless. This knock-out risk makes barrier options cheaper than vanilla.</div>
+          </div>
+          <div class="exotic-card">
+            <div class="exotic-badge">Retrospective</div>
+            <div class="exotic-name">Lookback Option</div>
+            <div class="exotic-price" id="ex-lookback">—</div>
+            <div class="exotic-desc">Payoff = final price minus the stock's historical minimum. This perfect hindsight premium makes it the most expensive option here.</div>
+          </div>
+        </div>
+
+      </div><!-- /results-content -->
+    </main>
+
+  </div><!-- /app-body -->
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <p>Built with Python, Flask &amp; Plotly &middot; Data computed in real time</p>
+    <p class="footer-name">Built by Abdullah Sultan</p>
+    <p class="footer-series">
+      Part of the QuantPy Series &middot; Project 3 of N
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="https://quantbacktesterpy.vercel.app" class="footer-link" target="_blank" rel="noopener">&larr; Project 1: SMA Backtester</a>
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="https://quantportfoliopy.vercel.app" class="footer-link" target="_blank" rel="noopener">&larr; Project 2: Portfolio Backtester</a>
+    </p>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
