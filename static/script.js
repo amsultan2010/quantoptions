@@ -224,8 +224,16 @@ async function runPricing() {
     buildBadges(p);
 
     /* Prices */
-    document.getElementById('bs-price').textContent = fmtPrice(data.bs_price);
-    document.getElementById('mc-price').textContent = fmtPrice(data.mc_price);
+    function setPriceShimmer(id, text) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.classList.remove('price-shimmer');
+      void el.offsetWidth; // force reflow to restart animation
+      el.classList.add('price-shimmer');
+      el.addEventListener('animationend', () => el.classList.remove('price-shimmer'), { once: true });
+    }
+    setPriceShimmer('bs-price', fmtPrice(data.bs_price));
+    setPriceShimmer('mc-price', fmtPrice(data.mc_price));
 
     /* Greeks */
     function setGreek(id, val) {

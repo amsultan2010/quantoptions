@@ -1082,6 +1082,92 @@ body {
 @keyframes pulse       { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes pulse-dot   { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.75); } }
 @keyframes cardIn      { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmerSweep { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+@keyframes borderGlow  {
+  0%, 100% { box-shadow: var(--shadow-md); }
+  50%       { box-shadow: var(--shadow-md), 0 0 32px rgba(139, 92, 246, 0.12); }
+}
+@keyframes heroFloat   { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+
+/* ================================================================
+   EXTENDED EFFECTS
+   ================================================================ */
+
+/* Hero title: gentle float */
+.hero-title { animation: heroFloat 7s ease-in-out infinite; }
+
+/* Badge: shimmer light sweep */
+.hero-badge { position: relative; overflow: hidden; }
+.hero-badge::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent 0%, rgba(196, 181, 253, 0.18) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmerSweep 3.5s linear infinite;
+  pointer-events: none;
+}
+
+/* Config sidebar: slow breathing glow */
+.config-sidebar { animation: borderGlow 4s ease-in-out infinite; }
+
+/* Section labels: purple left-tick accent */
+.section-label::before {
+  content: '';
+  display: block;
+  width: 3px; height: 12px;
+  background: var(--purple);
+  border-radius: 2px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Greek cards: stagger + symbol glow on hover */
+.greek-card:nth-child(1) { animation-delay: 0.04s; }
+.greek-card:nth-child(2) { animation-delay: 0.09s; }
+.greek-card:nth-child(3) { animation-delay: 0.14s; }
+.greek-card:nth-child(4) { animation-delay: 0.19s; }
+.greek-card:nth-child(5) { animation-delay: 0.24s; }
+.greek-card:hover .greek-sym { text-shadow: 0 0 18px rgba(167, 139, 250, 0.65); }
+
+/* Exotic cards: stagger */
+.exotic-card:nth-child(1) { animation-delay: 0.04s; }
+.exotic-card:nth-child(2) { animation-delay: 0.09s; }
+.exotic-card:nth-child(3) { animation-delay: 0.14s; }
+.exotic-card:nth-child(4) { animation-delay: 0.19s; }
+.exotic-card:nth-child(5) { animation-delay: 0.24s; }
+.exotic-card:hover .exotic-price { text-shadow: 0 0 16px rgba(196, 181, 253, 0.55); }
+
+/* Price block: shimmer gradient on hover top bar */
+.price-block:hover::before {
+  background: linear-gradient(90deg, var(--purple), var(--pale), transparent);
+}
+
+/* Price value shimmer class — toggled by JS after results load */
+.price-shimmer {
+  background: linear-gradient(90deg, var(--purple-bright) 20%, #F4F0FF 50%, var(--purple-bright) 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerSweep 0.85s ease-out forwards;
+}
+
+/* Feat cards: hover glow */
+.feat-card:hover {
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.10);
+}
+
+/* Run button: ripple on click */
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 65%);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.btn-primary:active:not(:disabled)::after { opacity: 1; }
 
 /* ================================================================
    RESPONSIVE
